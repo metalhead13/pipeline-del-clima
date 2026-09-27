@@ -1,15 +1,100 @@
-name: ci
+name: CI - pruebas y pipeline
+
 on:
   push:
+    branches:
+      - MAYHEM
+
   pull_request:
+    branches:
+      - MAYHEM
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  test:
+  tests:
+    name: Pruebas unitarias
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
           cache: pip
-      - run: pip install -e .
-      - run: pytest
+
+      - name: Instalar proyecto
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Ejecutar pruebas
+        run: |
+          pytest -v
+
+  pipeline:
+    name: Ejecutar pipeline completo
+    runs-on: ubuntu-latest
+    needs: tests
+    timeout-minutes: 15
+
+    if: github.event_name == 'workflow_dispatch'
+
+    env:
+      PROJECT_ROOT: ${{ github.workspace }}
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar proyecto
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Ejecutar pipeline Open-Meteo
+        run: |
+          python -m weather_pipeline.cli run
+
+      - name: Consultar Parquet con DuckDB
+        run: |
+          python -m weather_pipeline.cli query
+
+      - name: Verificar archivos generados
+        run: |
+          test -f data/staging/weather_daily.parquet
+          test -f data/bi/weather_monthly.parquet
+          test -f data/bi/weather_monthly.csv
+          test -f data/quality/quality_report.json
+
+          echo "Particiones Parquet:"
+          find data/processed/weather_daily -name "*.parquet" | sort
+
+          echo "Reporte de calidad:"
+          cat data/quality/quality_report.json
+
+      - name: Guardar resultados
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-pipeline-results
+          path: |
+            data/raw/
+            data/staging/
+            data/processed/
+            data/bi/
+            data/quality/
+          retention-days: 7
+          if-no-files-found: error
