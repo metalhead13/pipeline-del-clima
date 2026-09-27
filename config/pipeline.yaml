@@ -1,0 +1,24 @@
+api:
+  base_url: https://archive-api.open-meteo.com/v1/archive
+  timezone: America/Bogota
+  start_date: '2026-01-01'
+  end_date: '2026-09-15'
+  timeout_seconds: 30
+  max_attempts: 3
+  daily_variables:
+    - weather_code
+    - temperature_2m_mean
+    - temperature_2m_max
+    - temperature_2m_min
+    - precipitation_sum
+    - rain_sum
+    - precipitation_hours
+    - wind_speed_10m_max
+    - wind_gusts_10m_max
+thresholds:
+  rainy_day_mm: 1.0
+  heavy_rain_mm: 20.0
+  strong_wind_kmh: 39.0
+  adverse_weather_codes: [65, 67, 75, 77, 82, 85, 86, 95, 96, 99]
+storage:
+  compression: snappy

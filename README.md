@@ -1,5 +1,5 @@
-# pipeline-del-clima BY Alejandro Amaya
-
+# pipeline-del-clima  
+# Propiedad de Alejandro Amaya
 # Pipeline meteorológico histórico — Colombia
 
 Solución reproducible de punta a punta para extraer datos diarios de Open-Meteo, preservar la capa **raw**, validar y transformar la información, publicar Parquet particionado y generar un dataset mensual para BI. Cubre Bogotá, Medellín, Barranquilla, Cali y Villavicencio entre `2026-01-01` y `2026-09-15`, en `America/Bogota`.
